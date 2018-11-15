@@ -102,6 +102,7 @@ function Map:init(path, plugins, ox, oy)
 			local formatted_path = utils.format_path(path .. tileset.image)
 
 			if not STI.cache[formatted_path] then
+				print(formatted_path)
 				utils.fix_transparent_color(tileset, formatted_path)
 				utils.cache_image(STI, formatted_path, tileset.image)
 			else
@@ -542,7 +543,7 @@ function Map:setObjectSpriteBatches(layer)
 
 			batches[tileset] = batches[tileset] or newBatch(image)
 
-			local sx =  object.width / tile.width 
+			local sx =  object.width / tile.width
 			local sy =  object.height / tile.height
 
 			local batch = batches[tileset]
