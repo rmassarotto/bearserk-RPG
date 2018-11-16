@@ -5,7 +5,25 @@ function love.load()
     up = newAnimation(love.graphics.newImage("gfx/up.png"), 32, 32, 0.5)
     left = newAnimation(love.graphics.newImage("gfx/left.png"), 32, 32, 0.5)
     right = newAnimation(love.graphics.newImage("gfx/right.png"), 32, 32, 0.5)
+    world = love.physics.newWorld(0,200,true)
+        world:setCallbacks(beginContact, endContact, preSolve, postSolve)
     player = Player.new(0,0)
+        player.body = love.physics.newBody(world, 0, 0, "dynamic")
+        player.s = love.physics.newPolygonShape(0,0,0,32,32,32,32,0)
+        player.f = love.physics.newFixture(player.body, player.s)
+        player.f:setUserData("Player")
+    ball = {}
+       ball.b = love.physics.newBody(world, 400,200, "dynamic")  -- set x,y position (400,200) and let it move and hit other objects ("dynamic")
+       ball.b:setMass(10)                                        -- make it pretty light
+       ball.s = love.physics.newCircleShape(50)                  -- give it a radius of 50
+       ball.f = love.physics.newFixture(ball.b, ball.s)          -- connect body to shape
+       ball.f:setRestitution(0.4)                                -- make it bouncy
+       ball.f:setUserData("Ball")                                -- give it a name, which we'll access later
+   static = {}
+       static.b = love.physics.newBody(world, 400,400, "static") -- "static" makes it not move
+       static.s = love.physics.newRectangleShape(200,50)         -- set size to 200,50 (x,y)
+       static.f = love.physics.newFixture(static.b, static.s)
+       static.f:setUserData("Block")
 end
 
 function love.update(dt)
@@ -37,8 +55,8 @@ function love.update(dt)
         if left.currentTime >= left.duration then
             left.currentTime = left.currentTime - left.duration
         end
-
     end
+    player.body:setPosition(player.x, player.y)
     function love.keyreleased (key)
         if key == "s" or key=="down" then
             flag=1
@@ -52,6 +70,7 @@ function love.update(dt)
     end
     -- elseif love.keyreleased("s") or love.keyreleased("down") then
     --     print("Ola")
+    world:update(dt)
 end
 
 function love.draw()
@@ -76,15 +95,15 @@ function love.draw()
         love.graphics.draw(left.spriteSheet, left.quads[spriteNum], player.x, player.y,0, 1)
     elseif flag == 7 then
         love.graphics.draw(left.spriteSheet, left.quads[2], player.x, player.y,0, 1)
-
     end
-
+    love.graphics.circle("line", ball.b:getX(),ball.b:getY(), ball.s:getRadius(), 20)
+    love.graphics.polygon("line", static.b:getWorldPoints(static.s:getPoints()))
 end
 
 function newAnimation(image, width, height, duration)
     local animation = {}
     animation.spriteSheet = image;
-    animation.quads = {};
+        animation.quads = {};
 
     for y = 0, image:getHeight() - height, height do
         for x = 0, image:getWidth() - width, width do
