@@ -1,23 +1,41 @@
 require 'player'
+local inspect = require ("inspect")
 flag = 0
 hitbox_offset_y = 25
 hitbox_offset_x = 5
-movespeed = 100
+movespeed = 170
+inventory_state = 0
 local sti = require "sti"
 local bump = require "sti/bump"
-function love.load()
+
+
+function love.load(mapParam)
     world = bump.newWorld(32)
-    map = sti("maps/map0.lua", {"bump"})
+    if(type(mapParam) == "table") then
+        mapParam = "maps/map0.lua"
+    end
+    actual_map=mapParam
+    map = sti(mapParam, {"bump"})
     map:bump_init(world)
-    down = newAnimation(love.graphics.newImage("gfx/down.png"), 32, 32, 0.5)
-    up = newAnimation(love.graphics.newImage("gfx/up.png"), 32, 32, 0.5)
-    left = newAnimation(love.graphics.newImage("gfx/left.png"), 32, 32, 0.5)
-    right = newAnimation(love.graphics.newImage("gfx/right.png"), 32, 32, 0.5)
+    down = newAnimation(love.graphics.newImage("gfx/down.png"), 32, 32, 0.3)
+    up = newAnimation(love.graphics.newImage("gfx/up.png"), 32, 32, 0.3)
+    left = newAnimation(love.graphics.newImage("gfx/left.png"), 32, 32, 0.3)
+    right = newAnimation(love.graphics.newImage("gfx/right.png"), 32, 32, 0.3)
     local layer = map:addCustomLayer("Sprites", 4)
-    player = Player.new(0,275)
+    player = Player.new(0,300)
     world:add(player, player.x, player.y, 23, 7)
     layer.draw = function(self)
         local spriteNum = nil
+        player_weapon = love.graphics.newImage(player.weapon)
+        love.graphics.draw(player_weapon, 224, 608)
+        player_armor = love.graphics.newImage(player.armor)
+        love.graphics.draw(player_armor, 256, 608)
+        player_shield = love.graphics.newImage(player.shield)
+        love.graphics.draw(player_shield, 288, 608)
+        player_helmet = love.graphics.newImage(player.helmet)
+        love.graphics.draw(player_helmet, 256, 576)
+        player_boots = love.graphics.newImage(player.boots)
+        love.graphics.draw(player_boots, 256, 640)
         if flag == 0 then
             spriteNum= math.floor(down.currentTime / down.duration * #down.quads) + 1
             love.graphics.draw(down.spriteSheet, down.quads[spriteNum], player.x, player.y-hitbox_offset_y,0, 1)
@@ -76,7 +94,9 @@ function love.update(dt)
     player.x, player.y, cols, len = world:move(player,player.x, player.y)
     for i=1,len do
         local col = cols[i]
-        print(("Collision with %s."):format(col.other.name))
+        if(col.other.name == "gate") then
+            love.load("maps/map1.lua")
+        end
     end
     function love.keyreleased (key)
         if key == "s" or key=="down" then
