@@ -17,25 +17,20 @@ function love.load(mapParam)
     actual_map=mapParam
     map = sti(mapParam, {"bump"})
     map:bump_init(world)
-    down = newAnimation(love.graphics.newImage("gfx/down.png"), 32, 32, 0.3)
-    up = newAnimation(love.graphics.newImage("gfx/up.png"), 32, 32, 0.3)
-    left = newAnimation(love.graphics.newImage("gfx/left.png"), 32, 32, 0.3)
-    right = newAnimation(love.graphics.newImage("gfx/right.png"), 32, 32, 0.3)
+    down = newAnimation(love.graphics.newImage("gfx/player_sprites/down.png"), 32, 32, 0.3)
+    up = newAnimation(love.graphics.newImage("gfx/player_sprites/up.png"), 32, 32, 0.3)
+    left = newAnimation(love.graphics.newImage("gfx/player_sprites/left.png"), 32, 32, 0.3)
+    right = newAnimation(love.graphics.newImage("gfx/player_sprites/right.png"), 32, 32, 0.3)
     local layer = map:addCustomLayer("Sprites", 4)
     player = Player.new(0,300)
     world:add(player, player.x, player.y, 23, 7)
+    loadItems()
+    cursor_layer = map:addCustomLayer("Cursor", 5)
+    loadCursorInventory(1,1)
+    box_layer = map:addCustomLayer("box", 6)
+    showItemInformations(1,1)
     layer.draw = function(self)
         local spriteNum = nil
-        player_weapon = love.graphics.newImage(player.weapon)
-        love.graphics.draw(player_weapon, 224, 608)
-        player_armor = love.graphics.newImage(player.armor)
-        love.graphics.draw(player_armor, 256, 608)
-        player_shield = love.graphics.newImage(player.shield)
-        love.graphics.draw(player_shield, 288, 608)
-        player_helmet = love.graphics.newImage(player.helmet)
-        love.graphics.draw(player_helmet, 256, 576)
-        player_boots = love.graphics.newImage(player.boots)
-        love.graphics.draw(player_boots, 256, 640)
         if flag == 0 then
             spriteNum= math.floor(down.currentTime / down.duration * #down.quads) + 1
             love.graphics.draw(down.spriteSheet, down.quads[spriteNum], player.x, player.y-hitbox_offset_y,0, 1)
@@ -89,6 +84,51 @@ function love.update(dt)
         if left.currentTime >= left.duration then
             left.currentTime = left.currentTime - left.duration
         end
+    elseif love.keyboard.isDown("lalt") and love.keyboard.isDown("1") then
+        loadCursorInventory(2,1)
+        -- pcall(showItemInformations,2,1)
+    elseif love.keyboard.isDown("lalt") and love.keyboard.isDown("2") then
+        loadCursorInventory(2,2)
+        -- pcall(showItemInformations,2,2)
+    elseif love.keyboard.isDown("lalt")  and love.keyboard.isDown("3") then
+        loadCursorInventory(2,3)
+        -- pcall(showItemInformations,3,2)
+    elseif love.keyboard.isDown("lalt") and love.keyboard.isDown("4") then
+        loadCursorInventory(2,4)
+        -- pcall(showItemInformations,4,2)
+    elseif love.keyboard.isDown("lalt") and love.keyboard.isDown("5") then
+        loadCursorInventory(2,5)
+        -- pcall(showItemInformations,5,2)
+    elseif love.keyboard.isDown("lctrl") and love.keyboard.isDown("1") then
+        loadCursorInventory(3,1)
+        -- pcall(showItemInformations,1,3)
+    elseif love.keyboard.isDown("lctrl") and love.keyboard.isDown("2") then
+        loadCursorInventory(3,2)
+        -- pcall(showItemInformations,2,3)
+    elseif love.keyboard.isDown("lctrl") and love.keyboard.isDown("3") then
+        loadCursorInventory(3,3)
+        -- pcall(showItemInformations,3,3)
+    elseif love.keyboard.isDown("lctrl") and love.keyboard.isDown("4") then
+        loadCursorInventory(3,4)
+        -- pcall(showItemInformations,4,3)
+    elseif love.keyboard.isDown("lctrl") and love.keyboard.isDown("5") then
+        loadCursorInventory(3,5)
+        -- pcall(showItemInformations,5,3)
+    elseif love.keyboard.isDown("1") then
+        loadCursorInventory(1,1)
+        pcall(showItemInformations,1,1)
+    elseif love.keyboard.isDown("2") then
+        loadCursorInventory(1,2)
+        pcall(showItemInformations,1,2)
+    elseif love.keyboard.isDown("3") then
+        loadCursorInventory(1,3)
+        -- pcall(showItemInformations,3,1)
+    elseif love.keyboard.isDown("4") then
+        loadCursorInventory(1,4)
+        -- pcall(showItemInformations,4,1)
+    elseif love.keyboard.isDown("5") then
+        loadCursorInventory(1,5)
+        -- pcall(showItemInformations,5,1)
     end
     local cols
     player.x, player.y, cols, len = world:move(player,player.x, player.y)
@@ -131,4 +171,47 @@ function newAnimation(image, width, height, duration)
     animation.duration = duration or 1
     animation.currentTime = 0
     return animation
+end
+
+function loadItems()
+    local layer = map:addCustomLayer("Items", 4)
+    layer.draw = function(self)
+        player_weapon_img = love.graphics.newImage(player.weapon.path)
+        love.graphics.draw(player_weapon_img, 224, 608)
+        player_armor_img = love.graphics.newImage(player.armor.path)
+        love.graphics.draw(player_armor_img, 256, 608)
+        player_shield_img = love.graphics.newImage(player.shield.path)
+        love.graphics.draw(player_shield_img, 288, 608)
+        player_helmet_img = love.graphics.newImage(player.helmet.path)
+        love.graphics.draw(player_helmet_img, 256, 576)
+        player_boots_img = love.graphics.newImage(player.boots.path)
+        love.graphics.draw(player_boots_img, 256, 640)
+        iterator = 0
+        for i=1,#player.items do
+            for j=1,#player.items[i] do
+                iterator = iterator+32
+                local item_image = love.graphics.newImage(player.items[i][j].path)
+                love.graphics.draw(item_image, 352+iterator, 608)
+            end
+        end
+    end
+end
+
+function loadCursorInventory(posiy,posix)
+    cursor_layer.draw = function(self)
+        cursor = love.graphics.newImage("gfx/scenario/cursor.png")
+        love.graphics.draw(cursor, 352+(posix*32), 576+ (posiy*32))
+    end
+end
+
+function showItemInformations (x,y)
+    box_layer.draw = function(self)
+        local item_image = love.graphics.newImage(player.items[x][y].path)
+        love.graphics.push()
+            love.graphics.scale(4,4)
+            love.graphics.draw(item_image, 565/4, 580/4)
+        love.graphics.pop()
+        love.graphics.printf("Nome",680, 580,200)
+        love.graphics.printf(player.items[x][y].name,680, 595,200)
+    end
 end
