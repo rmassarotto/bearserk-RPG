@@ -1,12 +1,15 @@
 require 'player'
-local inspect = require ("inspect")
+require 'item'
+require 'inventory'
+
 flag = 0
 hitbox_offset_y = 25
 hitbox_offset_x = 5
 movespeed = 170
-inventory_state = 0
 local sti = require "sti"
 local bump = require "sti/bump"
+cursor = {x = 1, y = 1,image = love.graphics.newImage("gfx/scenario/cursor.png") }
+void_tile = {image=love.graphics.newImage("gfx/scenario/void.png")}
 
 
 function love.load(mapParam)
@@ -26,9 +29,7 @@ function love.load(mapParam)
     world:add(player, player.x, player.y, 23, 7)
     loadItems()
     cursor_layer = map:addCustomLayer("Cursor", 5)
-    loadCursorInventory(1,1)
     box_layer = map:addCustomLayer("box", 6)
-    showItemInformations(1,1)
     layer.draw = function(self)
         local spriteNum = nil
         if flag == 0 then
@@ -53,6 +54,8 @@ function love.load(mapParam)
             love.graphics.draw(left.spriteSheet, left.quads[2], player.x, player.y-hitbox_offset_y,0, 1)
         end
     end
+    player.inventory.addItem(player.inventory, Item.new("Poção de cura", "Consumivel", {["Capacidade de cura"] = 20}, "Uma poção mágica capaz de regenerar vida", "gfx/items/consumables/ruby_old.png"))
+    player.inventory.addItem(player.inventory, Item.new("Lança", "Arma", {["Ataque"] = {8, 14}, ["Acuracia"] = 0.8}, "Uma lança com ponta de aço", "gfx/items/spear.png"))
 end
 
 function love.update(dt)
@@ -84,52 +87,8 @@ function love.update(dt)
         if left.currentTime >= left.duration then
             left.currentTime = left.currentTime - left.duration
         end
-    elseif love.keyboard.isDown("lalt") and love.keyboard.isDown("1") then
-        loadCursorInventory(2,1)
-        -- pcall(showItemInformations,2,1)
-    elseif love.keyboard.isDown("lalt") and love.keyboard.isDown("2") then
-        loadCursorInventory(2,2)
-        -- pcall(showItemInformations,2,2)
-    elseif love.keyboard.isDown("lalt")  and love.keyboard.isDown("3") then
-        loadCursorInventory(2,3)
-        -- pcall(showItemInformations,3,2)
-    elseif love.keyboard.isDown("lalt") and love.keyboard.isDown("4") then
-        loadCursorInventory(2,4)
-        -- pcall(showItemInformations,4,2)
-    elseif love.keyboard.isDown("lalt") and love.keyboard.isDown("5") then
-        loadCursorInventory(2,5)
-        -- pcall(showItemInformations,5,2)
-    elseif love.keyboard.isDown("lctrl") and love.keyboard.isDown("1") then
-        loadCursorInventory(3,1)
-        -- pcall(showItemInformations,1,3)
-    elseif love.keyboard.isDown("lctrl") and love.keyboard.isDown("2") then
-        loadCursorInventory(3,2)
-        -- pcall(showItemInformations,2,3)
-    elseif love.keyboard.isDown("lctrl") and love.keyboard.isDown("3") then
-        loadCursorInventory(3,3)
-        -- pcall(showItemInformations,3,3)
-    elseif love.keyboard.isDown("lctrl") and love.keyboard.isDown("4") then
-        loadCursorInventory(3,4)
-        -- pcall(showItemInformations,4,3)
-    elseif love.keyboard.isDown("lctrl") and love.keyboard.isDown("5") then
-        loadCursorInventory(3,5)
-        -- pcall(showItemInformations,5,3)
-    elseif love.keyboard.isDown("1") then
-        loadCursorInventory(1,1)
-        pcall(showItemInformations,1,1)
-    elseif love.keyboard.isDown("2") then
-        loadCursorInventory(1,2)
-        pcall(showItemInformations,1,2)
-    elseif love.keyboard.isDown("3") then
-        loadCursorInventory(1,3)
-        -- pcall(showItemInformations,3,1)
-    elseif love.keyboard.isDown("4") then
-        loadCursorInventory(1,4)
-        -- pcall(showItemInformations,4,1)
-    elseif love.keyboard.isDown("5") then
-        loadCursorInventory(1,5)
-        -- pcall(showItemInformations,5,1)
     end
+
     local cols
     player.x, player.y, cols, len = world:move(player,player.x, player.y)
     for i=1,len do
@@ -149,18 +108,68 @@ function love.update(dt)
             flag=7
         end
     end
+
+    function love.keypressed(key)
+        if key == "j" then
+            if(cursor.x > 1) then
+                cursor.x=cursor.x-1
+            end
+
+        elseif key == "i" then
+            if(cursor.y > 1) then
+                cursor.y = cursor.y-1
+            end
+
+        elseif key == "k" then
+            if(cursor.y < 3) then
+                cursor.y=cursor.y+1
+            end
+
+        elseif key == "l" then
+            if(cursor.x < 5) then
+                cursor.x=cursor.x+1
+            end
+
+        elseif key == "e" then
+            utilize_item()
+        end
+    end
     map:update(dt)
 end
+
+function utilize_item (args)
+    local index = (cursor.y-1) *5 + (cursor.x)
+    if player.inventory.items[index] ~= 0 then
+        if player.inventory.items[index].Nome == "Poção de cura" then
+            if player.health < (player.health_max - 20) then
+                player.health = player.health + 20
+            else
+                player.health = player.health_max
+            end
+            Inventory.removeItem(player.inventory, index)
+        elseif player.inventory.items[index].Tipo == "Arma" then
+            Item.swapItemLocations(player.weapon, player.inventory.items[index])
+            local aux_to_swap = player.inventory.items[index]
+            player.inventory.removeItem(player.inventory, index)
+            player.inventory.addItem(player.inventory, player.weapon)
+            player.weapon = aux_to_swap
+            player.attack = player.inventory.items[index].attack
+        end
+    end
+end
+
 
 function love.draw()
     map:draw()
     map:bump_draw(world)
+    drawCursor(cursor.x, cursor.y)
+    showItemInformations()
 end
 
 function newAnimation(image, width, height, duration)
     local animation = {}
     animation.spriteSheet = image;
-        animation.quads = {};
+    animation.quads = {};
 
     for y = 0, image:getHeight() - height, height do
         for x = 0, image:getWidth() - width, width do
@@ -177,41 +186,66 @@ function loadItems()
     local layer = map:addCustomLayer("Items", 4)
     layer.draw = function(self)
         player_weapon_img = love.graphics.newImage(player.weapon.path)
-        love.graphics.draw(player_weapon_img, 224, 608)
+        love.graphics.draw(player_weapon_img, player.weapon.x, player.weapon.y)
         player_armor_img = love.graphics.newImage(player.armor.path)
-        love.graphics.draw(player_armor_img, 256, 608)
+        love.graphics.draw(player_armor_img, player.armor.x, player.armor.y)
         player_shield_img = love.graphics.newImage(player.shield.path)
-        love.graphics.draw(player_shield_img, 288, 608)
+        love.graphics.draw(player_shield_img, player.shield.x, player.shield.y)
         player_helmet_img = love.graphics.newImage(player.helmet.path)
-        love.graphics.draw(player_helmet_img, 256, 576)
+        love.graphics.draw(player_helmet_img, player.helmet.x, player.helmet.y)
         player_boots_img = love.graphics.newImage(player.boots.path)
-        love.graphics.draw(player_boots_img, 256, 640)
+        love.graphics.draw(player_boots_img, player.boots.x, player.boots.y)
         iterator = 0
-        for i=1,#player.items do
-            for j=1,#player.items[i] do
-                iterator = iterator+32
-                local item_image = love.graphics.newImage(player.items[i][j].path)
-                love.graphics.draw(item_image, 352+iterator, 608)
+        for i=1,15 do
+            if player.inventory.items[i] ~= 0 then
+                local item_image = love.graphics.newImage(player.inventory.items[i].path)
+                love.graphics.draw(item_image, player.inventory.items[i].x, player.inventory.items[i].y)
             end
         end
     end
 end
 
-function loadCursorInventory(posiy,posix)
+
+function drawCursor (posix, posiy)
     cursor_layer.draw = function(self)
-        cursor = love.graphics.newImage("gfx/scenario/cursor.png")
-        love.graphics.draw(cursor, 352+(posix*32), 576+ (posiy*32))
+        love.graphics.draw(cursor.image, 352+(posix*32), 576+ (posiy*32))
     end
 end
 
-function showItemInformations (x,y)
-    box_layer.draw = function(self)
-        local item_image = love.graphics.newImage(player.items[x][y].path)
-        love.graphics.push()
-            love.graphics.scale(4,4)
-            love.graphics.draw(item_image, 565/4, 580/4)
-        love.graphics.pop()
-        love.graphics.printf("Nome",680, 580,200)
-        love.graphics.printf(player.items[x][y].name,680, 595,200)
+function showItemInformations ()
+    local index = (cursor.y-1) *5 + (cursor.x)
+    if player.inventory.items[index] ~= 0 then
+        box_layer.draw = function(self)
+            if player.inventory.items[index] ~= 0 then
+                local item_image = love.graphics.newImage(player.inventory.items[index].path)
+                love.graphics.push()
+                love.graphics.scale(4,4)
+                love.graphics.draw(item_image, 565/4, 580/4)
+                love.graphics.pop()
+                local iterator = 0
+                for key,value in pairs(player.inventory.items[index]) do
+                    if key ~= "path" and key ~= "caracteristcs" and key ~="x" and key ~= "y" then
+                        local text = key .. ": " .. value
+                        love.graphics.printf(text,680, 580+iterator,500)
+                        iterator= iterator + 25
+                    end
+                end
+                for key,value in pairs(player.inventory.items[index].caracteristcs) do
+                    local text = ""
+                    if key == "Ataque" then
+                        text = key .. ": " .. value[1] .. "-" .. value[2]
+                    else
+                        text = key .. ": " .. value
+                    end
+                    love.graphics.printf(text,680, 580+iterator,500)
+                    iterator= iterator + 25
+                end
+            end
+        end
+    else
+        box_layer.draw = function(self)
+            love.graphics.draw(void_tile.image, 565, 580)
+        end
+
     end
 end
