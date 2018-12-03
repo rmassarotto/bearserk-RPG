@@ -3,6 +3,7 @@ Item.__index = Item
 
 function Item.new (name,type, caracteristcs, description, path )
     local self = setmetatable({},Item)
+    self.name = "Item"
     self["Nome"] = name
     self.caracteristcs = caracteristcs
     self["Descrição"] = description
