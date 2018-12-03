@@ -1,6 +1,7 @@
 require 'player'
 require 'item'
 require 'inventory'
+require 'monster'
 
 flag = 0
 hitbox_offset_y = 25
@@ -15,8 +16,9 @@ void_tile = {image=love.graphics.newImage("gfx/scenario/void.png")}
 function love.load(mapParam)
     world = bump.newWorld(32)
     if(type(mapParam) == "table") then
-        mapParam = "maps/map0.lua"
+        mapParam = "maps/map4.lua"
     end
+    currentMap = "map4"
     actual_map=mapParam
     map = sti(mapParam, {"bump"})
     map:bump_init(world)
@@ -24,8 +26,10 @@ function love.load(mapParam)
     up = newAnimation(love.graphics.newImage("gfx/player_sprites/up.png"), 32, 32, 0.3)
     left = newAnimation(love.graphics.newImage("gfx/player_sprites/left.png"), 32, 32, 0.3)
     right = newAnimation(love.graphics.newImage("gfx/player_sprites/right.png"), 32, 32, 0.3)
+    monsterSprite = love.graphics.newImage("gfx/monsters/monster1.PNG")
+    spiderSprite = love.graphics.newImage("gfx/monsters/spider.png")
     local layer = map:addCustomLayer("Sprites", 4)
-    player = Player.new(0,300)
+    player = Player.new(50,300)
     world:add(player, player.x, player.y, 23, 7)
     loadItems()
     cursor_layer = map:addCustomLayer("Cursor", 5)
@@ -89,14 +93,28 @@ function love.update(dt)
         end
     end
 
+--COLISOES
     local cols
     player.x, player.y, cols, len = world:move(player,player.x, player.y)
     for i=1,len do
         local col = cols[i]
         if(col.other.name == "gate") then
             love.load("maps/map1.lua")
+            currentMap = "map1"
+        end
+        if(col.other.name == "gate2") then
+            love.load("maps/map3.lua")
+            currentMap = "map3"
+        end
+        if(col.other.name == "gate3") then
+            love.load("maps/map4.lua")
+            currentMap = "map4"
+        end
+        if(col.other.name == "Item") then
+          print(col.other.name)
         end
     end
+
     function love.keyreleased (key)
         if key == "s" or key=="down" then
             flag=1
@@ -158,12 +176,41 @@ function utilize_item (args)
     end
 end
 
+function newItem(name, type, caracteristcs, description, path, position_X, position_Y)
+  item = Item.new(name, type, caracteristcs, description, path)
+  world:add(item, position_X, position_Y, 25, 50)
+  itemSprite = love.graphics.newImage(path)
+  love.graphics.draw(itemSprite, position_X, position_Y)
+end
+
+function newMonster(sprite, position_X, position_Y)
+  monster = Monster.new(position_X, position_Y, 10, 10, 100)
+  world:add(monster, monster.x, monster.y, 27, 55)
+  love.graphics.draw(monsterSprite, position_X, position_Y)
+end
 
 function love.draw()
     map:draw()
     map:bump_draw(world)
     drawCursor(cursor.x, cursor.y)
     showItemInformations()
+    if currentMap == "map1" then
+      newMonster(monsterSprite, 650, 230)
+      newMonster(spiderSprite, 1200, 250)
+      newItem("Lança", "Arma", {["Ataque"] = {8, 14}, ["Acuracia"] = 0.8}, "Uma lança com ponta de aço", "gfx/items/spear.png", 700, 230)
+    elseif currentMap == "map2" then
+      newMonster(spiderSprite, 400, 250)
+      newMonster(spiderSprite, 1010, 250)
+      newMonster(spiderSprite, 600, 110)
+      newItem("Poção de cura", "Consumivel", {["Capacidade de cura"] = 20}, "Uma poção mágica capaz de regenerar vida", "gfx/items/consumables/ruby_old.png", 450, 430)
+    elseif currentMap == "map3" then
+      newMonster(monsterSprite, 520, 430)
+      newMonster(spiderSprite, 1200, 360)
+      newItem("Lança", "Arma", {["Ataque"] = {8, 14}, ["Acuracia"] = 0.8}, "Uma lança com ponta de aço", "gfx/items/spear.png", 1100, 250)
+    elseif currentMap == "map4" then
+      newMonster(monsterSprite, 420, 420)
+      newMonster(spiderSprite, 1000, 360)
+    end
 end
 
 function newAnimation(image, width, height, duration)
@@ -204,7 +251,6 @@ function loadItems()
         end
     end
 end
-
 
 function drawCursor (posix, posiy)
     cursor_layer.draw = function(self)
