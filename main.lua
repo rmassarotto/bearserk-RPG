@@ -60,6 +60,7 @@ function love.load(mapParam)
     end
     player.inventory.addItem(player.inventory, Item.new("Poção de cura", "Consumivel", {["Capacidade de cura"] = 20}, "Uma poção mágica capaz de regenerar vida", "gfx/items/consumables/ruby_old.png"))
     player.inventory.addItem(player.inventory, Item.new("Lança", "Arma", {["Ataque"] = {8, 14}, ["Acuracia"] = 0.8}, "Uma lança com ponta de aço", "gfx/items/spear.png"))
+    player.inventory.addItem(player.inventory, Item.new("Lança", "Escudo", {["Ataque"] = {8, 14}, ["Acuracia"] = 0.8}, "Uma lança com ponta de aço", "gfx/items/spear.png"))
 end
 
 function love.update(dt)
@@ -165,13 +166,41 @@ function utilize_item (args)
                 player.health = player.health_max
             end
             Inventory.removeItem(player.inventory, index)
+
         elseif player.inventory.items[index].Tipo == "Arma" then
             Item.swapItemLocations(player.weapon, player.inventory.items[index])
             local aux_to_swap = player.inventory.items[index]
             player.inventory.removeItem(player.inventory, index)
             player.inventory.addItem(player.inventory, player.weapon)
             player.weapon = aux_to_swap
-            player.attack = player.inventory.items[index].attack
+
+        elseif player.inventory.items[index].Tipo == "Armadura" then
+            Item.swapItemLocations(player.armor, player.inventory.items[index])
+            local aux_to_swap = player.inventory.items[index]
+            player.inventory.removeItem(player.inventory, index)
+            player.inventory.addItem(player.inventory, player.armor)
+            player.armor = aux_to_swap
+
+        elseif player.inventory.items[index].Tipo == "Bota" then
+            Item.swapItemLocations(player.boots, player.inventory.items[index])
+            local aux_to_swap = player.inventory.items[index]
+            player.inventory.removeItem(player.inventory, index)
+            player.inventory.addItem(player.inventory, player.boots)
+            player.boots = aux_to_swap
+
+        elseif player.inventory.items[index].Tipo == "Capacete" then
+            Item.swapItemLocations(player.helmet, player.inventory.items[index])
+            local aux_to_swap = player.inventory.items[index]
+            player.inventory.removeItem(player.inventory, index)
+            player.inventory.addItem(player.inventory, player.helmet)
+            player.helmet = aux_to_swap
+
+        elseif player.inventory.items[index].Tipo == "Escudo" then
+            Item.swapItemLocations(player.shield, player.inventory.items[index])
+            local aux_to_swap = player.inventory.items[index]
+            player.inventory.removeItem(player.inventory, index)
+            player.inventory.addItem(player.inventory, player.shield)
+            player.shield = aux_to_swap
         end
     end
 end

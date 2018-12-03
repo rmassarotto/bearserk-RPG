@@ -11,7 +11,7 @@ function Player.new (x, y)
     self.weapon = Item.new("Espada de aço","Arma", {["Ataque"] = {10,12}, ["Acuracia"] = 0.9}, "Uma espada simples feita de aço", "gfx/items/initials/initial_sword.png")
     self.weapon.x = 224
     self.weapon.y = 608
-    self.shield = Item.new("Escudo de madeira","Esucod", {["Taxa de bloqueio"] = 0.2}, "Um escudo de madeira gasto", "gfx/items/initials/initial_shield.png")
+    self.shield = Item.new("Escudo de madeira","Escudo", {["Taxa de bloqueio"] = 0.2}, "Um escudo de madeira gasto", "gfx/items/initials/initial_shield.png")
     self.shield.x = 284
     self.shield.y = 608
     self.armor = Item.new("Armadura de madeira","Peitoral", {["Defesa"] = 0.2}, "Uma armadura élfica de madeira", "gfx/items/initials/initial_armor.png")
