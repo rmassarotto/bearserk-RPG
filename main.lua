@@ -2,6 +2,7 @@ require 'player'
 require 'item'
 require 'inventory'
 require 'monster'
+local insp = require 'inspect'
 
 flag = 0
 hitbox_offset_y = 25
@@ -11,14 +12,16 @@ local sti = require "sti"
 local bump = require "sti/bump"
 cursor = {x = 1, y = 1,image = love.graphics.newImage("gfx/scenario/cursor.png") }
 void_tile = {image=love.graphics.newImage("gfx/scenario/void.png")}
+battle_mod = false
+actual_enemy = {}
 
 
 function love.load(mapParam)
     world = bump.newWorld(32)
     if(type(mapParam) == "table") then
-        mapParam = "maps/map4.lua"
+        mapParam = "maps/map1-1.lua"
     end
-    currentMap = "map4"
+    currentMap = "map1-1"
     actual_map=mapParam
     map = sti(mapParam, {"bump"})
     map:bump_init(world)
@@ -26,8 +29,6 @@ function love.load(mapParam)
     up = newAnimation(love.graphics.newImage("gfx/player_sprites/up.png"), 32, 32, 0.3)
     left = newAnimation(love.graphics.newImage("gfx/player_sprites/left.png"), 32, 32, 0.3)
     right = newAnimation(love.graphics.newImage("gfx/player_sprites/right.png"), 32, 32, 0.3)
-    monsterSprite = love.graphics.newImage("gfx/monsters/monster1.PNG")
-    spiderSprite = love.graphics.newImage("gfx/monsters/spider.png")
     local layer = map:addCustomLayer("Sprites", 4)
     player = Player.new(50,300)
     world:add(player, player.x, player.y, 23, 7)
@@ -58,9 +59,6 @@ function love.load(mapParam)
             love.graphics.draw(left.spriteSheet, left.quads[2], player.x, player.y-hitbox_offset_y,0, 1)
         end
     end
-    player.inventory.addItem(player.inventory, Item.new("Poção de cura", "Consumivel", {["Capacidade de cura"] = 20}, "Uma poção mágica capaz de regenerar vida", "gfx/items/consumables/ruby_old.png"))
-    player.inventory.addItem(player.inventory, Item.new("Lança", "Arma", {["Ataque"] = {8, 14}, ["Acuracia"] = 0.8}, "Uma lança com ponta de aço", "gfx/items/spear.png"))
-    player.inventory.addItem(player.inventory, Item.new("Lança", "Escudo", {["Ataque"] = {8, 14}, ["Acuracia"] = 0.8}, "Uma lança com ponta de aço", "gfx/items/spear.png"))
 end
 
 function love.update(dt)
@@ -100,22 +98,31 @@ function love.update(dt)
     for i=1,len do
         local col = cols[i]
         if(col.other.name == "gate") then
-            love.load("maps/map1.lua")
-            currentMap = "map1"
-        end
-        if(col.other.name == "gate2") then
-            love.load("maps/map3.lua")
-            currentMap = "map3"
-        end
-        if(col.other.name == "gate3") then
-            love.load("maps/map4.lua")
-            currentMap = "map4"
-        end
-        if(col.other.name == "Item") then
-          print(col.other.name)
-        end
-    end
+            love.load("maps/map1-1.lua")
+            currentMap = "map1-1"
+        elseif (col.other.name == "mermaid") then
+            Battle = map:addCustomLayer("Battle", 8)
+            Battle.draw = function(self)
+                map=sti("maps/battle_mermaid.lua", {"bump"})
+                loadItems()
+                battle_mod = true
+                actual_enemy = Monster.new(0,0,"Mermaid", {10,15}, 0.2, 30)
+            end
 
+        end
+        -- if(col.other.name == "gate2") then
+        --     love.load("maps/map3.lua")
+        --     currentMap = "map3"
+        -- end
+        -- if(col.other.name == "gate3") then
+        --     love.load("maps/map4.lua")
+        --     currentMap = "map4"
+        -- end
+        -- if(col.other.name == "Item") then
+        --   print(col.other.name)
+        -- end
+    end
+    
     function love.keyreleased (key)
         if key == "s" or key=="down" then
             flag=1
@@ -123,6 +130,11 @@ function love.update(dt)
             flag=3
         elseif key == "w" or key=="up" then
             flag=5
+        elseif key == "a" and battle_mod == true then
+            map:removeLayer("Battle")
+            print(insp.inspect(map.layers))
+            -- local ataq = player.attack(player, actual_enemy)
+            -- love.graphics.print(tostring(ataq), 500,500,200)
         elseif key == "a" or key=="left" then
             flag=7
         end
@@ -152,9 +164,29 @@ function love.update(dt)
         elseif key == "e" then
             utilize_item()
         end
+
     end
     map:update(dt)
 end
+
+function startBattle()
+    local battle = map:addCustomLayer("Battle",8)
+end
+
+function shallowcopy(orig)
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        copy = {}
+        for orig_key, orig_value in pairs(orig) do
+            copy[orig_key] = orig_value
+        end
+    else -- number, string, boolean, etc
+        copy = orig
+    end
+    return copy
+end
+
 
 function utilize_item (args)
     local index = (cursor.y-1) *5 + (cursor.x)
@@ -169,7 +201,7 @@ function utilize_item (args)
 
         elseif player.inventory.items[index].Tipo == "Arma" then
             Item.swapItemLocations(player.weapon, player.inventory.items[index])
-            local aux_to_swap = player.inventory.items[index]
+            local aux_to_swap = shallowcopy(player.inventory.items[index])
             player.inventory.removeItem(player.inventory, index)
             player.inventory.addItem(player.inventory, player.weapon)
             player.weapon = aux_to_swap
@@ -194,7 +226,6 @@ function utilize_item (args)
             player.inventory.removeItem(player.inventory, index)
             player.inventory.addItem(player.inventory, player.helmet)
             player.helmet = aux_to_swap
-
         elseif player.inventory.items[index].Tipo == "Escudo" then
             Item.swapItemLocations(player.shield, player.inventory.items[index])
             local aux_to_swap = player.inventory.items[index]
@@ -223,23 +254,16 @@ function love.draw()
     map:bump_draw(world)
     drawCursor(cursor.x, cursor.y)
     showItemInformations()
-    if currentMap == "map1" then
-      newMonster(monsterSprite, 650, 230)
-      newMonster(spiderSprite, 1200, 250)
-      newItem("Lança", "Arma", {["Ataque"] = {8, 14}, ["Acuracia"] = 0.8}, "Uma lança com ponta de aço", "gfx/items/spear.png", 700, 230)
-    elseif currentMap == "map2" then
-      newMonster(spiderSprite, 400, 250)
-      newMonster(spiderSprite, 1010, 250)
-      newMonster(spiderSprite, 600, 110)
-      newItem("Poção de cura", "Consumivel", {["Capacidade de cura"] = 20}, "Uma poção mágica capaz de regenerar vida", "gfx/items/consumables/ruby_old.png", 450, 430)
-    elseif currentMap == "map3" then
-      newMonster(monsterSprite, 520, 430)
-      newMonster(spiderSprite, 1200, 360)
-      newItem("Lança", "Arma", {["Ataque"] = {8, 14}, ["Acuracia"] = 0.8}, "Uma lança com ponta de aço", "gfx/items/spear.png", 1100, 250)
-    elseif currentMap == "map4" then
-      newMonster(monsterSprite, 420, 420)
-      newMonster(spiderSprite, 1000, 360)
-    end
+    drawPlayerInformations();
+end
+
+function drawPlayerInformations()
+    love.graphics.printf("Vida:".. player.health.."/"..player.health_max, 1180, 600,300)
+    love.graphics.printf("Ataque:"..player.weapon.caracteristcs.Ataque[1] .. "-" ..player.weapon.caracteristcs.Ataque[2],1180, 620, 300)
+    love.graphics.printf("Defesa:"..player.defense ,1180, 640, 300)
+    love.graphics.printf("Acuracia:"..player.weapon.caracteristcs.Acuracia ,1180, 660, 300)
+    love.graphics.printf("Taxa de bloqueio:"..player.shield.caracteristcs["Taxa de bloqueio"] ,1180, 680, 300)
+    love.graphics.printf("Esquiva:"..player.flee ,1180, 700, 300)
 end
 
 function newAnimation(image, width, height, duration)
@@ -299,7 +323,7 @@ function showItemInformations ()
                 love.graphics.pop()
                 local iterator = 0
                 for key,value in pairs(player.inventory.items[index]) do
-                    if key ~= "path" and key ~= "caracteristcs" and key ~="x" and key ~= "y" then
+                    if key ~= "path" and key ~= "caracteristcs" and key ~="x" and key ~= "y" and key ~= "name" then
                         local text = key .. ": " .. value
                         love.graphics.printf(text,680, 580+iterator,500)
                         iterator= iterator + 25
