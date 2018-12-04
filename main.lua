@@ -19,9 +19,9 @@ actual_enemy = {}
 function love.load(mapParam)
     world = bump.newWorld(32)
     if(type(mapParam) == "table") then
-        mapParam = "maps/map1-1.lua"
+        mapParam = "maps/map0.lua"
     end
-    currentMap = "map1-1"
+    currentMap = "map0"
     actual_map=mapParam
     map = sti(mapParam, {"bump"})
     map:bump_init(world)
@@ -100,15 +100,20 @@ function love.update(dt)
         if(col.other.name == "gate") then
             love.load("maps/map1-1.lua")
             currentMap = "map1-1"
-        elseif (col.other.name == "mermaid") then
+        elseif (col.other.name == "mermaid") and battle_mod == false then
             Battle = map:addCustomLayer("Battle", 8)
             Battle.draw = function(self)
-                map=sti("maps/battle_mermaid.lua", {"bump"})
-                loadItems()
+                map = sti("maps/battle_mermaid.lua", {"bump"})
                 battle_mod = true
                 actual_enemy = Monster.new(0,0,"Mermaid", {10,15}, 0.2, 30)
             end
-
+        elseif (col.other.name == "troll") and battle_mod == false then
+            Battle = map:addCustomLayer("Battle", 8)
+            Battle.draw = function(self)
+                map = sti("maps/battle_troll.lua", {"bump"})
+                battle_mod = true
+                actual_enemy = Monster.new(0,0,"Troll", {20,25}, 0.3, 40)
+            end
         end
         -- if(col.other.name == "gate2") then
         --     love.load("maps/map3.lua")
@@ -124,17 +129,22 @@ function love.update(dt)
     end
     
     function love.keyreleased (key)
-        if key == "s" or key=="down" then
+        if key == "f" and battle_mod == true then
+        player.fury(player)
+        print(player.attack, player.defense)
+    
+        elseif key == "d" and battle_mod == true then
+        player.defensive_mode(player)
+        print(player.attack, player.defense)
+        elseif key == "s" or key=="down" then
             flag=1
         elseif key == "d" or key=="right" then
             flag=3
         elseif key == "w" or key=="up" then
             flag=5
         elseif key == "a" and battle_mod == true then
-            map:removeLayer("Battle")
-            print(insp.inspect(map.layers))
-            -- local ataq = player.attack(player, actual_enemy)
-            -- love.graphics.print(tostring(ataq), 500,500,200)
+            local ataq = player.attack_act(player, actual_enemy)
+            print(ataq)
         elseif key == "a" or key=="left" then
             flag=7
         end
@@ -205,43 +215,44 @@ function utilize_item (args)
             player.inventory.removeItem(player.inventory, index)
             player.inventory.addItem(player.inventory, player.weapon)
             player.weapon = aux_to_swap
+            player.recalculeAttack(player)
 
         elseif player.inventory.items[index].Tipo == "Armadura" then
             Item.swapItemLocations(player.armor, player.inventory.items[index])
-            local aux_to_swap = player.inventory.items[index]
+            local aux_to_swap = shallowcopy(player.inventory.items[index])
             player.inventory.removeItem(player.inventory, index)
             player.inventory.addItem(player.inventory, player.armor)
             player.armor = aux_to_swap
+            player.recalculeDefense(player)
+            
 
         elseif player.inventory.items[index].Tipo == "Bota" then
             Item.swapItemLocations(player.boots, player.inventory.items[index])
-            local aux_to_swap = player.inventory.items[index]
+            local aux_to_swap = shallowcopy(player.inventory.items[index])
             player.inventory.removeItem(player.inventory, index)
             player.inventory.addItem(player.inventory, player.boots)
             player.boots = aux_to_swap
-
+            player.recalculeDefense(player)
+            
         elseif player.inventory.items[index].Tipo == "Capacete" then
             Item.swapItemLocations(player.helmet, player.inventory.items[index])
-            local aux_to_swap = player.inventory.items[index]
+            local aux_to_swap = shallowcopy(player.inventory.items[index])
             player.inventory.removeItem(player.inventory, index)
             player.inventory.addItem(player.inventory, player.helmet)
             player.helmet = aux_to_swap
+            player.recalculeDefense(player)
+            
         elseif player.inventory.items[index].Tipo == "Escudo" then
             Item.swapItemLocations(player.shield, player.inventory.items[index])
-            local aux_to_swap = player.inventory.items[index]
+            local aux_to_swap = shallowcopy(player.inventory.items[index])
             player.inventory.removeItem(player.inventory, index)
             player.inventory.addItem(player.inventory, player.shield)
             player.shield = aux_to_swap
+            player.recalculeBlockRate(player)
         end
     end
 end
 
-function newItem(name, type, caracteristcs, description, path, position_X, position_Y)
-  item = Item.new(name, type, caracteristcs, description, path)
-  world:add(item, position_X, position_Y, 25, 50)
-  itemSprite = love.graphics.newImage(path)
-  love.graphics.draw(itemSprite, position_X, position_Y)
-end
 
 function newMonster(sprite, position_X, position_Y)
   monster = Monster.new(position_X, position_Y, 10, 10, 100)
@@ -259,7 +270,7 @@ end
 
 function drawPlayerInformations()
     love.graphics.printf("Vida:".. player.health.."/"..player.health_max, 1180, 600,300)
-    love.graphics.printf("Ataque:"..player.weapon.caracteristcs.Ataque[1] .. "-" ..player.weapon.caracteristcs.Ataque[2],1180, 620, 300)
+    love.graphics.printf("Ataque:"..player.attack[1] .. "-" ..player.attack[2],1180, 620, 300)
     love.graphics.printf("Defesa:"..player.defense ,1180, 640, 300)
     love.graphics.printf("Acuracia:"..player.weapon.caracteristcs.Acuracia ,1180, 660, 300)
     love.graphics.printf("Taxa de bloqueio:"..player.shield.caracteristcs["Taxa de bloqueio"] ,1180, 680, 300)

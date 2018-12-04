@@ -27,9 +27,13 @@ function Inventory.addItem(self, item)
         return
     end
     self.items[i] = item
-    i = i*32
-    item.x = i%(32*5) + self.x
-    item.y = math.floor(i/(32*5)) + self.y
+    local x = i%6
+    local y = math.floor((i-1)/5)
+    item.y = y*32 + self.y
+    if(x==0) then
+        x=1
+    end
+    item.x = x*32 + self.x
     self.lenght = self.lenght+1
 end
 
