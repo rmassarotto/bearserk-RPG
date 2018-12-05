@@ -42,7 +42,8 @@ function Player.new (x, y)
 end
 
 function Player.attack_act(self, enemy)
-    local player_attack =  math.random(self.weapon.caracteristcs.Ataque[1], self.weapon.caracteristcs.Ataque[2])
+    local player_attack =  math.random(self.attack[1], self.attack[2])
+    player_attack = player_attack * (1-enemy.defense)
     enemy.health = enemy.health - player_attack
     return player_attack
 end

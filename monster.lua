@@ -12,3 +12,11 @@ function Monster.new (x, y, name, attack, defense, health)
     self.health = health
     return self
 end
+
+function Monster.attack_act(self, player)
+    os.execute("sleep 1")
+    local attack = math.random(self.attack[1],self.attack[2])
+    attack = attack*(1-player.defense)
+    player.health = player.health - attack;
+    return attack
+end

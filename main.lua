@@ -14,14 +14,25 @@ cursor = {x = 1, y = 1,image = love.graphics.newImage("gfx/scenario/cursor.png")
 void_tile = {image=love.graphics.newImage("gfx/scenario/void.png")}
 battle_mod = false
 actual_enemy = {}
-
+actual_music = 0
 
 function love.load(mapParam)
     world = bump.newWorld(32)
     if(type(mapParam) == "table") then
-        mapParam = "maps/map0.lua"
+        mapParam = "maps/map1-1.lua"
     end
-    currentMap = "map0"
+    currentMap = mapParam
+    if(currentMap == "maps/map0.lua") then
+        local music = love.audio.newSource("gfx/musics/Epic-battle-music-grzegorz-majcherczyk-heroica.mp3")
+        music:play()
+        actual_music = music
+    elseif(currentMap == "maps/map1-1.lua") then
+        -- actual_music:pause()
+        local music = love.audio.newSource("gfx/musics/101 - music 01.mp3")
+        music:play()
+        actual_music = music
+    end
+        
     actual_map=mapParam
     map = sti(mapParam, {"bump"})
     map:bump_init(world)
@@ -106,6 +117,7 @@ function love.update(dt)
                 map = sti("maps/battle_mermaid.lua", {"bump"})
                 battle_mod = true
                 actual_enemy = Monster.new(0,0,"Mermaid", {10,15}, 0.2, 30)
+                drawPlayerInformations()
             end
         elseif (col.other.name == "troll") and battle_mod == false then
             Battle = map:addCustomLayer("Battle", 8)
@@ -131,11 +143,14 @@ function love.update(dt)
     function love.keyreleased (key)
         if key == "f" and battle_mod == true then
         player.fury(player)
-        print(player.attack, player.defense)
-    
-        elseif key == "d" and battle_mod == true then
+        print("Inimigo atacou e deu "..actual_enemy.attack_act(actual_enemy, player) .. " de dano")
+        isBattleEnd()
+
+    elseif key == "d" and battle_mod == true then
         player.defensive_mode(player)
-        print(player.attack, player.defense)
+        print("Inimigo atacou e deu "..actual_enemy.attack_act(actual_enemy, player) .. " de dano")
+        isBattleEnd()
+
         elseif key == "s" or key=="down" then
             flag=1
         elseif key == "d" or key=="right" then
@@ -143,8 +158,12 @@ function love.update(dt)
         elseif key == "w" or key=="up" then
             flag=5
         elseif key == "a" and battle_mod == true then
-            local ataq = player.attack_act(player, actual_enemy)
-            print(ataq)
+            print("Player atacou e deu " ..player.attack_act(player, actual_enemy) .." de dano")
+            if(isBattleEnd() ~= 1) then
+                print("Inimigo atacou e deu "..actual_enemy.attack_act(actual_enemy, player) .. " de dano")
+            end
+            isBattleEnd()
+            
         elseif key == "a" or key=="left" then
             flag=7
         end
@@ -358,4 +377,18 @@ function showItemInformations ()
         end
 
     end
+end
+
+function isBattleEnd()
+    if(player.health <= 0) then
+        print("Player morreu, fim de jogo")
+        return 1
+    end
+
+    if(actual_enemy.health <= 0) then
+        print("Inimigo morreu, fecha tela de batalha")
+        return 1
+    end
+
+    return 0
 end
