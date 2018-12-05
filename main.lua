@@ -15,6 +15,7 @@ void_tile = {image=love.graphics.newImage("gfx/scenario/void.png")}
 battle_mod = false
 actual_enemy = {}
 actual_music = 0
+battle_music = love.audio.newSource("gfx/musics/bensound-epic.mp3")
 
 function love.load(mapParam)
     world = bump.newWorld(32)
@@ -117,6 +118,8 @@ function love.update(dt)
                 map = sti("maps/battle_mermaid.lua", {"bump"})
                 battle_mod = true
                 actual_enemy = Monster.new(0,0,"Mermaid", {10,15}, 0.2, 30)
+                actual_music:pause()
+                battle_music:play()
                 drawPlayerInformations()
             end
         elseif (col.other.name == "troll") and battle_mod == false then
@@ -125,6 +128,9 @@ function love.update(dt)
                 map = sti("maps/battle_troll.lua", {"bump"})
                 battle_mod = true
                 actual_enemy = Monster.new(0,0,"Troll", {20,25}, 0.3, 40)
+                actual_music:pause()
+                battle_music:play()
+                drawPlayerInformations()
             end
         end
         -- if(col.other.name == "gate2") then
@@ -382,11 +388,15 @@ end
 function isBattleEnd()
     if(player.health <= 0) then
         print("Player morreu, fim de jogo")
+        battle_music:stop()
+        actual_music:play()
         return 1
     end
-
+    
     if(actual_enemy.health <= 0) then
         print("Inimigo morreu, fecha tela de batalha")
+        battle_music:stop()
+        actual_music:play()
         return 1
     end
 
