@@ -19,7 +19,7 @@ actual_music = 0
 function love.load(mapParam)
     world = bump.newWorld(32)
     if(type(mapParam) == "table") then
-        mapParam = "maps/map1-1.lua"
+        mapParam = "maps/map0.lua"
     end
     currentMap = mapParam
     if(currentMap == "maps/map0.lua") then
@@ -27,7 +27,7 @@ function love.load(mapParam)
         music:play()
         actual_music = music
     elseif(currentMap == "maps/map1-1.lua") then
-        -- actual_music:pause()
+        actual_music:pause()
         local music = love.audio.newSource("gfx/musics/101 - music 01.mp3")
         music:play()
         actual_music = music
