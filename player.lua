@@ -29,6 +29,7 @@ function Player.new (x, y)
     self.health_max = 100
     self.block = self.shield.caracteristcs["Taxa de bloqueio"]
     self.flee = 0.1
+    self.xp = 0
     self.attack = self.weapon.caracteristcs["Ataque"]
     self.defense = self.armor.caracteristcs["Defesa"] + self.helmet.caracteristcs["Defesa"] + self.boots.caracteristcs["Defesa"]
     self.inventory = Inventory.new()

@@ -117,7 +117,7 @@ function love.update(dt)
             Battle.draw = function(self)
                 map = sti("maps/battle_mermaid.lua", {"bump"})
                 battle_mod = true
-                actual_enemy = Monster.new(0,0,"Mermaid", {10,15}, 0.2, 30)
+                actual_enemy = Monster.new(0,0,"Mermaid", {10,15}, 0.2, 30, 30)
                 actual_music:pause()
                 battle_music:play()
                 drawPlayerInformations()
@@ -127,7 +127,7 @@ function love.update(dt)
             Battle.draw = function(self)
                 map = sti("maps/battle_troll.lua", {"bump"})
                 battle_mod = true
-                actual_enemy = Monster.new(0,0,"Troll", {20,25}, 0.3, 40)
+                actual_enemy = Monster.new(0,0,"Troll", {20,25}, 0.3, 40, 50)
                 actual_music:pause()
                 battle_music:play()
                 drawPlayerInformations()
@@ -386,19 +386,24 @@ function showItemInformations ()
 end
 
 function isBattleEnd()
-    if(player.health <= 0) then
-        print("Player morreu, fim de jogo")
-        battle_music:stop()
-        actual_music:play()
-        return 1
+    if (battle_mod == true) then
+        if(player.health <= 0) then
+            print("Player morreu, fim de jogo")
+            battle_music:stop()
+            actual_music:play()
+            return 1
+        end
+        
+        if(actual_enemy.health <= 0) then
+            print("Inimigo morreu, fecha tela de batalha")
+            battle_music:stop()
+            actual_music:play()
+            print("XP antes = ".. player.xp)
+            player.xp = player.xp + actual_enemy.xp
+            print("XP depois = " .. player.xp)
+            battle_mod = false
+            return 1
+        end
     end
-    
-    if(actual_enemy.health <= 0) then
-        print("Inimigo morreu, fecha tela de batalha")
-        battle_music:stop()
-        actual_music:play()
-        return 1
-    end
-
     return 0
 end

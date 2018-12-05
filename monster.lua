@@ -2,7 +2,7 @@ Monster = {}
 Monster.__index = Monster
 
 
-function Monster.new (x, y, name, attack, defense, health)
+function Monster.new (x, y, name, attack, defense, health, xp)
     local self = setmetatable({},Monster)
     self.x = x
     self.y = y
@@ -10,6 +10,7 @@ function Monster.new (x, y, name, attack, defense, health)
     self.attack = attack
     self.defense = defense
     self.health = health
+    self.xp = xp
     return self
 end
 
